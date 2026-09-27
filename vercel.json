@@ -1,9 +1,0 @@
-{
-  "installCommand": "npm --prefix admin-portal install",
-  "buildCommand": "npm --prefix admin-portal run build",
-  "outputDirectory": "admin-portal/dist",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
-}
