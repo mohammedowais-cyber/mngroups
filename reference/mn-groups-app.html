@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MN Groups — Property Maintenance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy-900:#0F1B33;
+  --navy-700:#1C2E52;
+  --navy-500:#2E4372;
+  --brass-500:#B8902E;
+  --brass-600:#98741F;
+  --brass-100:#F1E6C9;
+  --bg:#EFF2F6;
+  --surface:#FFFFFF;
+  --surface-sunken:#E7EBF1;
+  --ink-900:#161B26;
+  --ink-600:#4B5468;
+  --ink-400:#828EA3;
+  --line:#DCE1E9;
+  --sky:#2F6BA6;
+  --purple:#6E5A9E;
+  --amber:#B37A1C;
+  --teal:#177A82;
+  --moss:#347A5C;
+  --clay:#B14B41;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:22px;
+  --font-head:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B0E14;
+    --surface:#141926;
+    --surface-sunken:#0F1420;
+    --ink-900:#EDEFF4;
+    --ink-600:#AFB7C8;
+    --ink-400:#7A8296;
+    --line:#232B3D;
+    --navy-900:#0B1220;
+    --navy-700:#141E33;
+    --navy-500:#213052;
+    --brass-100:#2A2413;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B0E14;
+  --surface:#141926;
+  --surface-sunken:#0F1420;
+  --ink-900:#EDEFF4;
+  --ink-600:#AFB7C8;
+  --ink-400:#7A8296;
+  --line:#232B3D;
+  --navy-900:#0B1220;
+  --navy-700:#141E33;
+  --navy-500:#213052;
+  --brass-100:#2A2413;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink-900);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;}
+h1,h2,h3,.head{font-family:var(--font-head);letter-spacing:-0.01em;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+/* ---------- Shell ---------- */
+#shell{min-height:100%;display:flex;flex-direction:column;}
+.topbar{
+  background:var(--navy-900);
+  color:#fff;
+  padding:10px 18px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  position:sticky;top:0;z-index:40;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--brass-500);
+  color:var(--navy-900);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-weight:700;font-size:14px;
+  flex:none;
+}
+.brand-word{font-family:var(--font-head);font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;}
+
+.role-switch{
+  display:flex;background:rgba(255,255,255,0.08);border-radius:999px;padding:3px;flex:none;
+}
+.role-switch button{
+  border:none;background:transparent;color:rgba(255,255,255,0.65);
+  padding:7px 13px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;
+  transition:background .15s, color .15s;
+}
+.role-switch button.active{background:var(--brass-500);color:var(--navy-900);font-weight:600;}
+
+.main{flex:1;display:flex;flex-direction:column;min-height:0;}
+
+/* ---------- Toast ---------- */
+#toast-wrap{position:fixed;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:200;pointer-events:none;padding:0 16px;}
+.toast{
+  background:var(--navy-900);color:#fff;padding:11px 18px;border-radius:999px;
+  font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  display:flex;align-items:center;gap:8px;
+  animation:toast-in .18s ease-out;
+}
+@keyframes toast-in{from{transform:translateY(8px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:var(--brass-500);flex:none;}
+
+/* ---------- Phone-app frame (tenant/vendor) ---------- */
+.app-stage{
+  flex:1;display:flex;justify-content:center;padding:22px 16px 90px;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(46,67,114,0.05), transparent 45%),
+    var(--bg);
+}
+.phone{
+  width:100%;max-width:428px;
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  border:1px solid var(--line);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  min-height:640px;
+  box-shadow:0 1px 2px rgba(15,27,51,0.04);
+}
+@media (min-width:760px){
+  .phone{box-shadow:0 24px 60px -20px rgba(15,27,51,0.28);}
+}
+.phone-head{
+  background:var(--navy-700);color:#fff;padding:18px 20px 16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.phone-head-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.phone-title{font-family:var(--font-head);font-size:19px;font-weight:600;}
+.phone-eyebrow{font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;}
+.persona-select{
+  background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.16);
+  border-radius:var(--radius-sm);padding:7px 10px;font-size:12.5px;max-width:180px;
+}
+.persona-select option{color:#000;}
+.phone-body{flex:1;overflow-y:auto;padding:18px 18px 26px;display:flex;flex-direction:column;gap:16px;}
+.phone-nav{
+  display:flex;border-top:1px solid var(--line);background:var(--surface);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.phone-nav button{
+  flex:1;background:none;border:none;padding:11px 4px 9px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--ink-400);font-size:11px;
+}
+.phone-nav button.active{color:var(--brass-600);}
+.phone-nav svg{width:20px;height:20px;}
+
+/* ---------- generic bits ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);
+  padding:16px;
+}
+.section-title{font-size:12.5px;font-weight:600;color:var(--ink-600);margin:0 0 2px;}
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.stat-box{
+  background:var(--surface-sunken);border-radius:var(--radius-md);padding:13px 14px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.stat-num{font-family:var(--font-head);font-size:22px;font-weight:700;}
+.stat-label{font-size:11.5px;color:var(--ink-600);}
+
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qa-btn{
+  border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-md);
+  padding:13px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;
+  font-size:13px;font-weight:600;color:var(--ink-900);
+  transition:border-color .15s;
+}
+.qa-btn:hover{border-color:var(--brass-500);}
+.qa-btn svg{width:19px;height:19px;color:var(--brass-600);}
+
+.btn{
+  border:none;border-radius:999px;padding:12px 18px;font-weight:600;font-size:14px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  transition:filter .15s, transform .05s;
+}
+.btn:active{transform:scale(0.98);}
+.btn-primary{background:var(--brass-500);color:var(--navy-900);}
+.btn-primary:hover{filter:brightness(1.05);}
+.btn-dark{background:var(--navy-900);color:#fff;}
+.btn-outline{background:transparent;border:1px solid var(--line);color:var(--ink-900);}
+.btn-block{width:100%;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sm{padding:8px 13px;font-size:12.5px;}
+
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:12.5px;font-weight:600;color:var(--ink-600);}
+.field input[type=text], .field textarea, .field select{
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;
+  font-size:14px;font-family:inherit;background:var(--surface);color:var(--ink-900);width:100%;
+}
+.field textarea{resize:vertical;min-height:80px;}
+.field-error{font-size:12px;color:var(--clay);}
+
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.cat-btn{
+  border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-md);
+  padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
+  font-size:11.5px;font-weight:600;color:var(--ink-600);text-align:center;
+}
+.cat-btn .emo{font-size:19px;}
+.cat-btn.sel{border-color:var(--brass-500);background:var(--brass-100);color:var(--ink-900);}
+
+.complaint-card{
+  border:1px solid var(--line);border-radius:var(--radius-md);padding:13px;cursor:pointer;
+  display:flex;flex-direction:column;gap:8px;background:var(--surface);
+}
+.complaint-card:hover{border-color:var(--navy-500);}
+.cc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.cc-id{font-size:11.5px;color:var(--ink-400);font-weight:500;}
+.cc-desc{font-size:13.5px;color:var(--ink-900);}
+.cc-meta{font-size:11.5px;color:var(--ink-600);display:flex;gap:6px;flex-wrap:wrap;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.badge .bdot{width:6px;height:6px;border-radius:50%;}
+.badge-submitted{background:#E7EFF7;color:var(--sky);}
+.badge-assigned{background:#EEEAF6;color:var(--purple);}
+.badge-progress{background:#FBF0DE;color:var(--amber);}
+.badge-completed{background:#E4F3F3;color:var(--teal);}
+.badge-closed{background:#E5F2EA;color:var(--moss);}
+@media (prefers-color-scheme:dark){
+  .badge-submitted{background:rgba(47,107,166,0.18);}
+  .badge-assigned{background:rgba(110,90,158,0.2);}
+  .badge-progress{background:rgba(179,122,28,0.2);}
+  .badge-completed{background:rgba(23,122,130,0.2);}
+  .badge-closed{background:rgba(52,122,92,0.2);}
+}
+:root[data-theme="dark"] .badge-submitted{background:rgba(47,107,166,0.18);}
+:root[data-theme="dark"] .badge-assigned{background:rgba(110,90,158,0.2);}
+:root[data-theme="dark"] .badge-progress{background:rgba(179,122,28,0.2);}
+:root[data-theme="dark"] .badge-completed{background:rgba(23,122,130,0.2);}
+:root[data-theme="dark"] .badge-closed{background:rgba(52,122,92,0.2);}
+
+.back-row{display:flex;align-items:center;gap:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(--ink-900);display:flex;padding:4px;}
+.back-btn svg{width:19px;height:19px;}
+.detail-title{font-family:var(--font-head);font-weight:600;font-size:16px;}
+
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center;}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--line);flex:none;margin-top:3px;}
+.tl-dot.done{background:var(--moss);}
+.tl-line{width:2px;flex:1;background:var(--line);margin-top:2px;}
+.tl-body{flex:1;padding-bottom:2px;}
+.tl-label{font-size:13.5px;font-weight:600;}
+.tl-time{font-size:11.5px;color:var(--ink-400);}
+
+.photo-row{display:flex;gap:8px;flex-wrap:wrap;}
+.photo-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--line);}
+.photo-add{
+  width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--line);background:none;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-400);cursor:pointer;
+}
+.photo-add svg{width:20px;height:20px;}
+
+.stars{display:flex;gap:6px;}
+.stars button{background:none;border:none;cursor:pointer;padding:0;}
+.stars svg{width:30px;height:30px;color:var(--line);}
+.stars svg.on{color:var(--brass-500);}
+
+.tabs{display:flex;gap:6px;background:var(--surface-sunken);padding:4px;border-radius:999px;}
+.tabs button{
+  flex:1;border:none;background:none;padding:8px 6px;border-radius:999px;font-size:12.5px;
+  font-weight:600;color:var(--ink-600);cursor:pointer;
+}
+.tabs button.active{background:var(--surface);color:var(--ink-900);box-shadow:0 1px 3px rgba(15,27,51,0.12);}
+
+.empty{
+  text-align:center;padding:34px 12px;color:var(--ink-400);display:flex;flex-direction:column;gap:8px;align-items:center;
+}
+.empty svg{width:34px;height:34px;color:var(--line);}
+
+/* ---------- Admin ---------- */
+.admin-shell{flex:1;display:flex;min-height:0;}
+.sidebar{
+  width:224px;flex:none;background:var(--navy-900);color:rgba(255,255,255,0.75);
+  display:flex;flex-direction:column;padding:16px 12px;gap:2px;overflow-y:auto;
+}
+.side-link{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:var(--radius-sm);
+  font-size:13.5px;font-weight:500;cursor:pointer;background:none;border:none;color:inherit;text-align:left;width:100%;
+}
+.side-link svg{width:17px;height:17px;flex:none;}
+.side-link.active{background:rgba(255,255,255,0.1);color:#fff;}
+.side-link:not(.active):hover{background:rgba(255,255,255,0.05);}
+.side-link.disabled{opacity:0.4;cursor:default;}
+.side-note{font-size:10.5px;color:rgba(255,255,255,0.35);padding:12px 11px 4px;}
+
+.admin-main{flex:1;overflow-y:auto;padding:22px 26px 60px;min-width:0;}
+.admin-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+.admin-h1{font-family:var(--font-head);font-size:21px;font-weight:600;}
+.admin-sub{font-size:12.5px;color:var(--ink-600);margin-top:3px;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:15px 16px;}
+.kpi-label{font-size:12px;color:var(--ink-600);margin-bottom:6px;}
+.kpi-num{font-family:var(--font-head);font-size:25px;font-weight:700;}
+.kpi-sub{font-size:11px;color:var(--ink-400);margin-top:3px;}
+
+.chart-row{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:18px;}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:16px;}
+.chart-card h3{font-size:13.5px;font-weight:600;margin:0 0 12px;}
+.chart-wrap{position:relative;height:230px;}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-600);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;}
+.table-card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap;}
+.table-card-head h3{font-size:13.5px;font-weight:600;margin:0;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:640px;}
+th{
+  text-align:left;font-size:11px;font-weight:600;color:var(--ink-400);
+  padding:9px 16px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr.row-click{cursor:pointer;}
+tr.row-click:hover td{background:var(--surface-sunken);}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-bar select, .filter-bar input{
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:7px 10px;font-size:12.5px;
+  background:var(--surface);color:var(--ink-900);
+}
+.vendor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+.vendor-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:15px;display:flex;flex-direction:column;gap:8px;}
+.vendor-name{font-weight:600;font-size:14px;}
+.vendor-cats{display:flex;gap:5px;flex-wrap:wrap;}
+.chip{background:var(--surface-sunken);border-radius:999px;padding:3px 9px;font-size:11px;color:var(--ink-600);}
+.vendor-rating{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink-600);}
+.vendor-rating svg{width:14px;height:14px;color:var(--brass-500);}
+
+.hamburger{display:none;background:none;border:none;color:#fff;padding:6px;cursor:pointer;}
+.hamburger svg{width:21px;height:21px;}
+
+@media (max-width:900px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .chart-row{grid-template-columns:1fr;}
+}
+@media (max-width:760px){
+  .admin-shell{position:relative;}
+  .sidebar{
+    position:fixed;top:0;bottom:0;left:0;z-index:100;
+    transform:translateX(-100%);transition:transform .2s ease;
+    padding-top:calc(16px + env(safe-area-inset-top,0px));
+    box-shadow:0 0 0 2000px rgba(0,0,0,0);
+  }
+  .sidebar.open{transform:translateX(0);box-shadow:0 0 0 2000px rgba(0,0,0,0.4);}
+  .hamburger{display:inline-flex;}
+  .admin-main{padding:16px 14px 50px;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+.help-text{font-size:12px;color:var(--ink-400);}
+.section-gap{height:2px;}
+.link-btn{background:none;border:none;color:var(--sky);font-size:12.5px;font-weight:600;cursor:pointer;padding:0;}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">MN</div>
+      <div style="min-width:0;">
+        <div class="brand-word">MN Groups</div>
+        <div class="brand-sub" id="topbar-sub">Property maintenance</div>
+      </div>
+    </div>
+    <div class="role-switch" id="role-switch"></div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+<div id="toast-wrap"></div>
+
+<script>
+/* ============ ICONS ============ */
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9.5a1 1 0 0 0 1-1v-4.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1V19a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-9"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6"/></svg>',
+  jobs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="12" rx="2"/><path d="M8.5 7V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2V7"/></svg>',
+  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.5" height="8" rx="1.5"/><rect x="13" y="3.5" width="7.5" height="5" rx="1.5"/><rect x="13" y="11" width="7.5" height="9.5" rx="1.5"/><rect x="3.5" y="14" width="7.5" height="6.5" rx="1.5"/></svg>',
+  bldg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="10" height="17" rx="1"/><path d="M15 9h4v11.5H15M8 7h.01M12 7h.01M8 10.5h.01M12 10.5h.01M8 14h.01M12 14h.01M8 20.5v-3.5h4v3.5"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c1.2-3.3 3.6-5 6.5-5s5.3 1.7 6.5 5"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.5 12.3c2.2.2 4 1.7 4.9 4.2"/></svg>',
+  wrench:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5l-6 6 2.4 2.4 6-6a4 4 0 0 0 5-5.4l-2.7 2.7-2.3-2.3 2.7-2.7Z"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 7.5 8.5-4 8.5 4-8.5 4-8.5-4Z"/><path d="M3.5 7.5v9l8.5 4 8.5-4v-9M12 11.5V20.5"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>',
+  doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2.5h8l4 4v14a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1Z"/><path d="M14 2.5V7h4.5"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.8-1.4-1.7-3-2.1.6a7.7 7.7 0 0 0-2.6-1.5L14.4 3h-3.6l-.4 2.2a7.7 7.7 0 0 0-2.6 1.5l-2.1-.6-1.7 3 1.8 1.4a7.6 7.6 0 0 0 0 3L4 14.9l1.7 3 2.1-.6c.8.7 1.6 1.2 2.6 1.5l.4 2.2h3.6l.4-2.2c1-.3 1.8-.8 2.6-1.5l2.1.6 1.7-3-1.8-1.4Z"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.6l1-1.7A1 1 0 0 1 9 4.7h6a1 1 0 0 1 .9.6l1 1.7h1.6A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18Z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.8l2.7 5.9 6.4.7-4.8 4.4 1.3 6.4-5.6-3.2-5.6 3.2 1.3-6.4-4.8-4.4 6.4-.7Z"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.3 4.2-2 1.6a12 12 0 0 0 5.9 5.9l1.6-2 4.2 1.3v3a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 5 4.6a1.5 1.5 0 0 1 1.5-1.1Z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9.5 18 20 6"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>',
+  inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4.2l1.5 3h4.6l1.5-3H20"/><path d="M5.5 6h13l1.5 6v6a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 18v-6Z"/></svg>'
+};
+function icon(name){return ICON[name]||'';}
+
+/* ============ SEED DATA ============ */
+const CATEGORIES = [
+  {id:'electrical', name:'Electrical', emo:'\u26A1', vendor:'v2'},
+  {id:'plumbing', name:'Plumbing', emo:'\uD83D\uDD27', vendor:'v1'},
+  {id:'carpentry', name:'Carpentry', emo:'\uD83E\uDE9A', vendor:'v3'},
+  {id:'painting', name:'Painting', emo:'\uD83C\uDFA8', vendor:'v4'},
+  {id:'cleaning', name:'Cleaning', emo:'\uD83E\uDDF9', vendor:'v5'},
+  {id:'civil', name:'Civil work', emo:'\uD83C\uDFD7', vendor:'v7'},
+  {id:'internet', name:'Internet', emo:'\uD83D\uDCF6', vendor:'v7'},
+  {id:'ac', name:'Air conditioning', emo:'\u2744', vendor:'v6'},
+  {id:'appliances', name:'Appliances', emo:'\uD83D\uDD0C', vendor:'v7'},
+  {id:'security', name:'Security', emo:'\uD83D\uDEE1', vendor:'v7'},
+  {id:'other', name:'Other', emo:'\uD83D\uDCCB', vendor:'v7'}
+];
+function catInfo(id){return CATEGORIES.find(c=>c.id===id) || CATEGORIES[CATEGORIES.length-1];}
+
+const VENDORS = [
+  {id:'v1', name:'XYZ Plumbing Services', categories:['plumbing'], phone:'+91 98765 43210', rating:4.6, jobsDone:58},
+  {id:'v2', name:'ABC Electricals', categories:['electrical'], phone:'+91 91234 56780', rating:4.4, jobsDone:71},
+  {id:'v3', name:'Royal Carpentry', categories:['carpentry'], phone:'+91 99887 76655', rating:4.8, jobsDone:33},
+  {id:'v4', name:'FreshCoat Painters', categories:['painting'], phone:'+91 90000 11122', rating:4.3, jobsDone:22},
+  {id:'v5', name:'SparkleClean Co', categories:['cleaning'], phone:'+91 93456 78901', rating:4.5, jobsDone:64},
+  {id:'v6', name:'CoolAir HVAC', categories:['ac'], phone:'+91 97766 55443', rating:4.2, jobsDone:19},
+  {id:'v7', name:'General Fix-it Crew', categories:['civil','internet','appliances','security','other'], phone:'+91 90909 09090', rating:4.0, jobsDone:41}
+];
+function vendorInfo(id){return VENDORS.find(v=>v.id===id);}
+
+const PROPERTIES = [
+  {id:'p1', name:'Galaxy PG', type:'PG', address:'Koramangala, Bengaluru', manager:'Deepa R.'},
+  {id:'p2', name:'Sunrise Residency', type:'Residential', address:'Andheri West, Mumbai', manager:'Vikram S.'},
+  {id:'p3', name:'Green Heights', type:'Residential', address:'Indiranagar, Bengaluru', manager:'Deepa R.'},
+  {id:'p4', name:'Orchid Towers', type:'Commercial', address:'Powai, Mumbai', manager:'Vikram S.'}
+];
+function propInfo(name){return PROPERTIES.find(p=>p.name===name);}
+
+const TENANTS = [
+  {id:'t1', name:'Rahul Kumar', phone:'+91 98765 12340', property:'Galaxy PG', unit:'Room 202'},
+  {id:'t2', name:'Neha Singh', phone:'+91 91234 55667', property:'Sunrise Residency', unit:'Flat 101'},
+  {id:'t3', name:'Amit Patel', phone:'+91 99887 22110', property:'Green Heights', unit:'Unit 203'},
+  {id:'t4', name:'Priya Nair', phone:'+91 90000 44556', property:'Galaxy PG', unit:'Room 118'},
+  {id:'t5', name:'Sanjay Mehta', phone:'+91 93456 77889', property:'Orchid Towers', unit:'Flat 405'}
+];
+function tenantInfo(id){return TENANTS.find(t=>t.id===id);}
+
+function daysAgo(n, h, m){
+  const d = new Date();
+  d.setDate(d.getDate()-n);
+  d.setHours(h,m,0,0);
+  return d.toISOString();
+}
+function fmt(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN',{month:'short',day:'numeric'}) + ', ' + d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+}
+function fmtShort(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+}
+
+const STATUS_META = {
+  Submitted:{label:'Submitted', cls:'badge-submitted', color:'#2F6BA6'},
+  Assigned:{label:'Vendor assigned', cls:'badge-assigned', color:'#6E5A9E'},
+  'In Progress':{label:'In progress', cls:'badge-progress', color:'#B37A1C'},
+  Completed:{label:'Awaiting your review', cls:'badge-completed', color:'#177A82'},
+  Closed:{label:'Closed', cls:'badge-closed', color:'#347A5C'}
+};
+
+function seedComplaints(){
+  const mk = (over)=>Object.assign({
+    id: nextComplaintId(),
+    beforePhotos:[], afterPhotos:[], rating:0, feedback:'', materials:'', report:''
+  }, over);
+  nextIdCounter = 130;
+  return [
+    mk({tenantId:'t1', property:'Galaxy PG', unit:'Room 202', category:'plumbing', description:'Bathroom tap is leaking continuously, water pooling on the floor.', status:'In Progress', vendorId:'v1', createdAt:daysAgo(2,10,35), assignedAt:daysAgo(2,11,5), startedAt:daysAgo(1,9,20)}),
+    mk({tenantId:'t2', property:'Sunrise Residency', unit:'Flat 101', category:'electrical', description:'Power socket in the living room sparks when a plug is inserted.', status:'Assigned', vendorId:'v2', createdAt:daysAgo(1,18,10), assignedAt:daysAgo(1,18,40)}),
+    mk({tenantId:'t3', property:'Green Heights', unit:'Unit 203', category:'carpentry', description:'Kitchen cabinet door has come off its hinge.', status:'Completed', vendorId:'v3', createdAt:daysAgo(6,9,0), assignedAt:daysAgo(6,9,30), startedAt:daysAgo(5,11,0), completedAt:daysAgo(5,15,40),
+      beforePhotos:[], afterPhotos:[], materials:'Replaced hinge set, wood screws', report:'Hinge was stripped, replaced with a heavier-duty pair and reset the door alignment.'}),
+    mk({tenantId:'t4', property:'Galaxy PG', unit:'Room 118', category:'internet', description:'Wi-Fi router in the common area keeps disconnecting.', status:'Submitted', createdAt:daysAgo(0,8,15)}),
+    mk({tenantId:'t5', property:'Orchid Towers', unit:'Flat 405', category:'ac', description:'AC is not cooling and making a rattling noise.', status:'Closed', vendorId:'v6', createdAt:daysAgo(12,14,0), assignedAt:daysAgo(12,14,20), startedAt:daysAgo(11,10,0), completedAt:daysAgo(11,13,0), verifiedAt:daysAgo(10,9,0), closedAt:daysAgo(10,9,0),
+      materials:'Cleaned filter, topped up refrigerant', report:'Filter was clogged and gas level was low. Cleaned and recharged the unit; cooling restored.', rating:5, feedback:'Quick and clean work, thank you.'}),
+    mk({tenantId:'t1', property:'Galaxy PG', unit:'Room 202', category:'cleaning', description:'Common corridor on the 2nd floor needs deep cleaning after renovation dust.', status:'Closed', vendorId:'v5', createdAt:daysAgo(9,9,0), assignedAt:daysAgo(9,9,15), startedAt:daysAgo(8,10,0), completedAt:daysAgo(8,13,0), verifiedAt:daysAgo(7,9,0), closedAt:daysAgo(7,9,0),
+      materials:'Standard cleaning kit', report:'Deep cleaned corridor, removed dust and debris, mopped and sanitised.', rating:4, feedback:'Good job overall.'}),
+    mk({tenantId:'t2', property:'Sunrise Residency', unit:'Flat 101', category:'painting', description:'Ceiling in the bedroom has a damp patch and peeling paint.', status:'Submitted', createdAt:daysAgo(0,15,50)}),
+    mk({tenantId:'t3', property:'Green Heights', unit:'Unit 203', category:'security', description:'Main gate CCTV camera is not recording at night.', status:'In Progress', vendorId:'v7', createdAt:daysAgo(3,17,0), assignedAt:daysAgo(3,17,30), startedAt:daysAgo(2,10,0)}),
+    mk({tenantId:'t4', property:'Galaxy PG', unit:'Room 118', category:'appliances', description:'Common washing machine drum is not spinning.', status:'Closed', vendorId:'v7', createdAt:daysAgo(16,11,0), assignedAt:daysAgo(16,11,30), startedAt:daysAgo(15,10,0), completedAt:daysAgo(15,14,0), verifiedAt:daysAgo(14,9,0), closedAt:daysAgo(14,9,0),
+      materials:'Replaced drive belt', report:'Drive belt had snapped; replaced it and tested a full cycle.', rating:5, feedback:'Fixed the same day, appreciated.'}),
+    mk({tenantId:'t5', property:'Orchid Towers', unit:'Flat 405', category:'civil', description:'Small crack appearing near the balcony door frame.', status:'Assigned', vendorId:'v7', createdAt:daysAgo(1,12,0), assignedAt:daysAgo(1,12,30)}),
+    mk({tenantId:'t1', property:'Galaxy PG', unit:'Room 202', category:'electrical', description:'Ceiling fan makes a loud clicking noise on high speed.', status:'Closed', vendorId:'v2', createdAt:daysAgo(20,9,0), assignedAt:daysAgo(20,9,30), startedAt:daysAgo(19,10,0), completedAt:daysAgo(19,12,0), verifiedAt:daysAgo(18,9,0), closedAt:daysAgo(18,9,0),
+      materials:'Capacitor replacement', report:'Capacitor was faulty, replaced and balanced the fan blades.', rating:4, feedback:'Noise is gone, thanks.'}),
+    mk({tenantId:'t2', property:'Sunrise Residency', unit:'Flat 101', category:'plumbing', description:'Kitchen sink drain is clogged and draining very slowly.', status:'Completed', vendorId:'v1', createdAt:daysAgo(4,8,0), assignedAt:daysAgo(4,8,30), startedAt:daysAgo(3,11,0), completedAt:daysAgo(3,13,30),
+      materials:'Drain snake, cleaning solution', report:'Cleared a heavy grease blockage in the trap and flushed the line.'})
+  ];
+}
+let nextIdCounter = 130;
+function nextComplaintId(){
+  nextIdCounter++;
+  return 'MC-2026-' + String(nextIdCounter).padStart(5,'0');
+}
+
+/* ============ STATE ============ */
+const STORAGE_KEY = 'mngroups_state_v1';
+let state = {
+  role: 'tenant',
+  tenantId: 't1',
+  tenantView: 'home',
+  raiseDraft: {category:null, description:'', photos:[]},
+  activeComplaintId: null,
+  vendorId: 'v1',
+  vendorTab: 'Assigned',
+  adminView: 'dashboard',
+  adminFilter: {status:'all', category:'all'},
+  complaints: null
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      if(saved && Array.isArray(saved.complaints) && saved.complaints.length){
+        state = Object.assign(state, saved);
+        return;
+      }
+    }
+  }catch(e){}
+  state.complaints = seedComplaints();
+}
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){}
+}
+
+/* ============ TOAST ============ */
+function toast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<span class="dot"></span><span>'+escapeHtml(msg)+'</span>';
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .25s'; el.style.opacity='0'; setTimeout(()=>el.remove(),250); }, 2200);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============ HELPERS ============ */
+function getComplaint(id){ return state.complaints.find(c=>c.id===id); }
+function tenantComplaints(tenantId){
+  return state.complaints.filter(c=>c.tenantId===tenantId).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+}
+function vendorComplaints(vendorId){
+  return state.complaints.filter(c=>c.vendorId===vendorId).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+}
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = ()=>reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+/* ============ RENDER ROOT ============ */
+let chartRefs = {};
+function destroyCharts(){
+  Object.values(chartRefs).forEach(c=>{ try{ c.destroy(); }catch(e){} });
+  chartRefs = {};
+}
+
+function render(){
+  persist();
+  renderRoleSwitch();
+  document.getElementById('topbar-sub').textContent =
+    state.role==='tenant' ? 'Tenant app' : state.role==='vendor' ? 'Vendor app' : 'Admin & manager portal';
+  const main = document.getElementById('main');
+  destroyCharts();
+  if(state.role==='tenant') main.innerHTML = renderTenantApp();
+  else if(state.role==='vendor') main.innerHTML = renderVendorApp();
+  else main.innerHTML = renderAdminApp();
+  afterRender();
+}
+
+function renderRoleSwitch(){
+  const roles = [['tenant','Tenant'],['vendor','Vendor'],['admin','Admin']];
+  document.getElementById('role-switch').innerHTML = roles.map(([id,label])=>
+    '<button class="'+(state.role===id?'active':'')+'" onclick="setRole(\''+id+'\')">'+label+'</button>'
+  ).join('');
+}
+function setRole(role){
+  state.role = role;
+  if(role==='tenant') state.tenantView='home';
+  if(role==='vendor') state.vendorTab='Assigned';
+  if(role==='admin') state.adminView='dashboard';
+  render();
+}
+
+/* ================= TENANT APP ================= */
+function renderTenantApp(){
+  const t = tenantInfo(state.tenantId);
+  let body = '';
+  if(state.tenantView==='home') body = tenantHome(t);
+  else if(state.tenantView==='raise') body = tenantRaise();
+  else if(state.tenantView==='track') body = tenantTrack(t);
+  else if(state.tenantView==='detail') body = tenantDetail();
+  else if(state.tenantView==='profile') body = tenantProfile(t);
+
+  return '<div class="app-stage"><div class="phone">'
+    + '<div class="phone-head">'
+    +   '<div class="phone-head-top">'
+    +     '<div><div class="phone-eyebrow">'+escapeHtml(t.property)+' \u00B7 '+escapeHtml(t.unit)+'</div><div class="phone-title">Hi, '+escapeHtml(t.name.split(' ')[0])+'</div></div>'
+    +   '</div>'
+    +   '<select class="persona-select" onchange="switchTenant(this.value)">'
+    +     TENANTS.map(x=>'<option value="'+x.id+'" '+(x.id===state.tenantId?'selected':'')+'>Logged in as '+escapeHtml(x.name)+'</option>').join('')
+    +   '</select>'
+    + '</div>'
+    + '<div class="phone-body">'+body+'</div>'
+    + tenantNav()
+    + '</div></div>';
+}
+function switchTenant(id){ state.tenantId = id; state.tenantView='home'; state.activeComplaintId=null; render(); }
+function tenantNav(){
+  const items = [['home','home','Home'],['raise','plus','Raise'],['track','list','Track'],['profile','user','Profile']];
+  return '<div class="phone-nav">' + items.map(([id,ic,label])=>
+    '<button class="'+((state.tenantView===id||(id==='track'&&state.tenantView==='detail'))?'active':'')+'" onclick="tenantGo(\''+id+'\')">'+icon(ic)+'<span>'+label+'</span></button>'
+  ).join('') + '</div>';
+}
+function tenantGo(view){
+  state.tenantView = view;
+  if(view==='raise'){ state.raiseDraft = {category:null, description:'', photos:[]}; }
+  render();
+}
+
+function tenantHome(t){
+  const mine = tenantComplaints(t.id);
+  const open = mine.filter(c=>c.status!=='Closed').length;
+  const closed = mine.filter(c=>c.status==='Closed').length;
+  const recent = mine.slice(0,3);
+  return ''
+  + '<div class="stat-row">'
+  +   '<div class="stat-box"><div class="stat-num">'+open+'</div><div class="stat-label">Open requests</div></div>'
+  +   '<div class="stat-box"><div class="stat-num">'+closed+'</div><div class="stat-label">Completed</div></div>'
+  + '</div>'
+  + '<div class="quick-actions">'
+  +   '<button class="qa-btn" onclick="tenantGo(\'raise\')">'+icon('plus')+'Raise a complaint</button>'
+  +   '<button class="qa-btn" onclick="callManager()">'+icon('phone')+'Call property manager</button>'
+  + '</div>'
+  + '<div>'
+  +   '<div class="section-title" style="margin-bottom:8px;">Recent requests</div>'
+  +   (recent.length? '<div style="display:flex;flex-direction:column;gap:9px;">'+recent.map(complaintCard).join('')+'</div>'
+       : emptyState('inbox','No requests yet','Raise your first maintenance request to get started.'))
+  + '</div>';
+}
+function emptyState(ic,title,sub){
+  return '<div class="empty">'+icon(ic)+'<div style="font-weight:600;color:var(--ink-900);font-size:13.5px;">'+title+'</div><div style="font-size:12px;">'+sub+'</div></div>';
+}
+function complaintCard(c){
+  const cat = catInfo(c.category);
+  const meta = STATUS_META[c.status];
+  return '<div class="complaint-card" onclick="openComplaint(\''+c.id+'\')">'
+    + '<div class="cc-top"><span class="cc-id">'+c.id+'</span>'
+    + '<span class="badge '+meta.cls+'"><span class="bdot" style="background:'+meta.color+'"></span>'+meta.label+'</span></div>'
+    + '<div class="cc-desc">'+cat.emo+' '+escapeHtml(cat.name)+' \u2014 '+escapeHtml(truncate(c.description,60))+'</div>'
+    + '<div class="cc-meta"><span>'+fmtShort(c.createdAt)+'</span>'+(c.vendorId?'<span>\u00B7 '+escapeHtml(vendorInfo(c.vendorId).name)+'</span>':'')+'</div>'
+    + '</div>';
+}
+function truncate(s,n){ return s.length>n ? s.slice(0,n-1)+'\u2026' : s; }
+function openComplaint(id){ state.activeComplaintId = id; state.tenantView='detail'; render(); }
+function callManager(){
+  const t = tenantInfo(state.tenantId);
+  const p = propInfo(t.property);
+  toast('Calling '+p.manager+' (property manager)\u2026');
+}
+
+function tenantRaise(){
+  const d = state.raiseDraft;
+  return ''
+  + '<div><div class="section-title" style="margin-bottom:9px;">Select a category</div>'
+  + '<div class="cat-grid">'
+  +   CATEGORIES.map(c=>'<button class="cat-btn '+(d.category===c.id?'sel':'')+'" onclick="pickCategory(\''+c.id+'\')"><span class="emo">'+c.emo+'</span>'+c.name+'</button>').join('')
+  + '</div></div>'
+  + '<div class="field"><label for="desc-input">Describe the issue</label>'
+  +   '<textarea id="desc-input" placeholder="e.g. Bathroom tap is leaking near the base." oninput="d_setDesc(this.value)">'+escapeHtml(d.description)+'</textarea>'
+  + '</div>'
+  + '<div class="field"><label>Photos</label>'
+  +   '<div class="photo-row">'
+  +     d.photos.map((p,i)=>'<img class="photo-thumb" src="'+p+'">').join('')
+  +     '<label class="photo-add">'+icon('cam')+'<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addRaisePhoto(event)"></label>'
+  +   '</div>'
+  + '</div>'
+  + '<div id="raise-error" class="field-error"></div>'
+  + '<button class="btn btn-primary btn-block" onclick="submitComplaint()">'+icon('check')+'Submit complaint</button>';
+}
+function pickCategory(id){ state.raiseDraft.category = id; render(); }
+function d_setDesc(v){ state.raiseDraft.description = v; }
+async function addRaisePhoto(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  try{
+    const url = await fileToDataUrl(file);
+    state.raiseDraft.photos.push(url);
+    render();
+  }catch(e){ toast('Could not load that photo'); }
+}
+function submitComplaint(){
+  const d = state.raiseDraft;
+  const errEl = document.getElementById('raise-error');
+  if(!d.category){ errEl.textContent = 'Choose a category to continue.'; return; }
+  if(!d.description || d.description.trim().length<4){ errEl.textContent = 'Add a short description of the issue.'; return; }
+  const t = tenantInfo(state.tenantId);
+  const cat = catInfo(d.category);
+  const c = {
+    id: nextComplaintId(),
+    tenantId: t.id, property: t.property, unit: t.unit,
+    category: d.category, description: d.description.trim(),
+    status: 'Assigned', vendorId: cat.vendor,
+    createdAt: new Date().toISOString(), assignedAt: new Date().toISOString(),
+    beforePhotos: d.photos.slice(), afterPhotos: [], rating:0, feedback:'', materials:'', report:''
+  };
+  state.complaints.unshift(c);
+  toast('Complaint submitted \u00B7 '+vendorInfo(cat.vendor).name+' assigned');
+  state.tenantView = 'track';
+  render();
+}
+
+function tenantTrack(t){
+  const mine = tenantComplaints(t.id);
+  return '<div class="section-title" style="margin-bottom:2px;">All requests</div>'
+    + (mine.length? '<div style="display:flex;flex-direction:column;gap:9px;">'+mine.map(complaintCard).join('')+'</div>'
+       : emptyState('inbox','No requests yet','Raise your first maintenance request to get started.'));
+}
+
+function tenantDetail(){
+  const c = getComplaint(state.activeComplaintId);
+  if(!c) return emptyState('inbox','Request not found','Go back and pick a request to view.');
+  const cat = catInfo(c.category);
+  const vendor = c.vendorId ? vendorInfo(c.vendorId) : null;
+  const steps = [
+    {key:'Submitted', label:'Complaint submitted', time:c.createdAt},
+    {key:'Assigned', label:'Vendor assigned'+(vendor?': '+vendor.name:''), time:c.assignedAt},
+    {key:'In Progress', label:'Vendor started the job', time:c.startedAt},
+    {key:'Completed', label:'Repair completed by vendor', time:c.completedAt},
+    {key:'Closed', label:'Verified & closed', time:c.verifiedAt||c.closedAt}
+  ];
+  const order = ['Submitted','Assigned','In Progress','Completed','Closed'];
+  const curIdx = order.indexOf(c.status);
+  return ''
+  + backRow('track','Track complaint')
+  + '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'
+  +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+  +     '<div><div class="cc-id">'+c.id+'</div><div style="font-weight:600;font-size:14.5px;margin-top:2px;">'+cat.emo+' '+escapeHtml(cat.name)+'</div></div>'
+  +     '<span class="badge '+STATUS_META[c.status].cls+'"><span class="bdot" style="background:'+STATUS_META[c.status].color+'"></span>'+STATUS_META[c.status].label+'</span>'
+  +   '</div>'
+  +   '<div style="font-size:13.5px;color:var(--ink-600);">'+escapeHtml(c.description)+'</div>'
+  +   (vendor? '<div class="help-text">Assigned to '+escapeHtml(vendor.name)+' \u00B7 '+vendor.phone+'</div>':'')
+  + '</div>'
+  + (c.beforePhotos.length? '<div><div class="section-title" style="margin-bottom:8px;">Photos you added</div><div class="photo-row">'+c.beforePhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')+'</div></div>':'')
+  + '<div class="card"><div class="section-title" style="margin-bottom:10px;">Status timeline</div>'
+  +   '<div class="timeline">'
+  +   steps.map((s,i)=>{
+        const done = i<=curIdx && s.time;
+        return '<div class="tl-item">'
+          + '<div class="tl-dot-wrap"><div class="tl-dot '+(done?'done':'')+'"></div>'+(i<steps.length-1?'<div class="tl-line"></div>':'')+'</div>'
+          + '<div class="tl-body"><div class="tl-label" style="color:'+(done?'var(--ink-900)':'var(--ink-400)')+';">'+s.label+'</div>'+(s.time? '<div class="tl-time">'+fmt(s.time)+'</div>':'')+'</div>'
+          + '</div>';
+      }).join('')
+  +   '</div></div>'
+  + (c.status==='Completed' && c.afterPhotos.length? '<div><div class="section-title" style="margin-bottom:8px;">Completion photos</div><div class="photo-row">'+c.afterPhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')+'</div>'+(c.report?'<div class="help-text" style="margin-top:8px;">'+escapeHtml(c.report)+'</div>':'')+'</div>':'')
+  + (c.status==='Completed' ? tenantVerifyBlock(c) : '')
+  + (c.status==='Closed' ? tenantClosedBlock(c) : '');
+}
+function backRow(view,title){
+  return '<div class="back-row"><button class="back-btn" onclick="tenantGo(\''+view+'\')">'+icon('back')+'</button><div class="detail-title">'+title+'</div></div>';
+}
+function tenantVerifyBlock(c){
+  return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">'
+    + '<div class="section-title">Rate the service</div>'
+    + starPicker(c.id)
+    + '<div class="field"><textarea id="fb-'+c.id+'" placeholder="Optional feedback for '+escapeHtml(vendorInfo(c.vendorId).name)+'"></textarea></div>'
+    + '<button class="btn btn-primary btn-block" onclick="verifyComplaint(\''+c.id+'\')">'+icon('check')+'Verify & close request</button>'
+    + '</div>';
+}
+function starPicker(id){
+  const c = getComplaint(id);
+  const cur = state.tempRating && state.tempRating.id===id ? state.tempRating.value : c.rating;
+  let html = '<div class="stars">';
+  for(let i=1;i<=5;i++){
+    html += '<button onclick="setTempRating(\''+id+'\','+i+')">'+iconStar(i<=cur)+'</button>';
+  }
+  html += '</div>';
+  return html;
+}
+function iconStar(on){
+  return '<svg class="'+(on?'on':'')+'" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.8l2.7 5.9 6.4.7-4.8 4.4 1.3 6.4-5.6-3.2-5.6 3.2 1.3-6.4-4.8-4.4 6.4-.7Z"/></svg>';
+}
+function setTempRating(id,val){
+  state.tempRating = {id, value:val};
+  render();
+}
+function verifyComplaint(id){
+  const c = getComplaint(id);
+  const rating = (state.tempRating && state.tempRating.id===id) ? state.tempRating.value : 0;
+  if(!rating){ toast('Pick a star rating first'); return; }
+  const fbEl = document.getElementById('fb-'+id);
+  c.rating = rating;
+  c.feedback = fbEl ? fbEl.value.trim() : '';
+  c.verifiedAt = new Date().toISOString();
+  c.closedAt = new Date().toISOString();
+  c.status = 'Closed';
+  state.tempRating = null;
+  toast('Thanks! Request closed and manager notified');
+  render();
+}
+function tenantClosedBlock(c){
+  return '<div class="card" style="display:flex;flex-direction:column;gap:8px;">'
+    + '<div class="section-title">Your rating</div>'
+    + '<div class="stars">'+[1,2,3,4,5].map(i=>iconStar(i<=c.rating)).join('')+'</div>'
+    + (c.feedback? '<div class="help-text">\u201C'+escapeHtml(c.feedback)+'\u201D</div>':'')
+    + '</div>';
+}
+function tenantProfile(t){
+  const p = propInfo(t.property);
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'
+    + '<div style="font-weight:600;font-size:15px;">'+escapeHtml(t.name)+'</div>'
+    + '<div class="help-text">'+t.phone+'</div>'
+    + '<div style="height:1px;background:var(--line);"></div>'
+    + '<div class="section-title">Property</div>'
+    + '<div style="font-size:13.5px;">'+escapeHtml(t.property)+' \u00B7 '+escapeHtml(t.unit)+'</div>'
+    + '<div class="help-text">'+escapeHtml(p.address)+'</div>'
+    + '<div class="section-title" style="margin-top:6px;">Property manager</div>'
+    + '<div style="font-size:13.5px;">'+escapeHtml(p.manager)+'</div>'
+    + '<button class="btn btn-outline btn-block" style="margin-top:6px;" onclick="callManager()">'+icon('phone')+'Call manager</button>'
+    + '</div>';
+}
+
+/* ================= VENDOR APP ================= */
+function renderVendorApp(){
+  const v = vendorInfo(state.vendorId);
+  let body = '';
+  if(state.tenantView==='vendor-detail' && state.activeComplaintId) body = vendorJobDetail();
+  else body = vendorJobsList(v);
+
+  return '<div class="app-stage"><div class="phone">'
+    + '<div class="phone-head">'
+    +   '<div class="phone-head-top">'
+    +     '<div><div class="phone-eyebrow">Vendor app</div><div class="phone-title">'+escapeHtml(v.name)+'</div></div>'
+    +   '</div>'
+    +   '<select class="persona-select" onchange="switchVendor(this.value)">'
+    +     VENDORS.map(x=>'<option value="'+x.id+'" '+(x.id===state.vendorId?'selected':'')+'>Logged in as '+escapeHtml(x.name)+'</option>').join('')
+    +   '</select>'
+    + '</div>'
+    + '<div class="phone-body">'+body+'</div>'
+    + '<div class="phone-nav"><button class="active">'+icon('jobs')+'<span>My jobs</span></button></div>'
+    + '</div></div>';
+}
+function switchVendor(id){ state.vendorId = id; state.tenantView='home'; state.activeComplaintId=null; render(); }
+function vendorJobsList(v){
+  const jobs = vendorComplaints(v.id);
+  const groups = {
+    Assigned: jobs.filter(j=>j.status==='Assigned'),
+    'In Progress': jobs.filter(j=>j.status==='In Progress'),
+    Done: jobs.filter(j=>j.status==='Completed'||j.status==='Closed')
+  };
+  const tab = state.vendorTab;
+  const list = groups[tab] || [];
+  return '<div class="tabs">'
+    + ['Assigned','In Progress','Done'].map(t=>'<button class="'+(tab===t?'active':'')+'" onclick="setVendorTab(\''+t+'\')">'+t+' ('+groups[t].length+')</button>').join('')
+    + '</div>'
+    + (list.length? '<div style="display:flex;flex-direction:column;gap:9px;margin-top:14px;">'+list.map(vendorJobCard).join('')+'</div>'
+       : '<div style="margin-top:10px;">'+emptyState('jobs','Nothing here','No jobs in this list right now.')+'</div>');
+}
+function setVendorTab(t){ state.vendorTab = t; render(); }
+function vendorJobCard(c){
+  const cat = catInfo(c.category);
+  const t = tenantInfo(c.tenantId);
+  const meta = STATUS_META[c.status];
+  return '<div class="complaint-card" onclick="openVendorJob(\''+c.id+'\')">'
+    + '<div class="cc-top"><span class="cc-id">'+c.id+'</span><span class="badge '+meta.cls+'"><span class="bdot" style="background:'+meta.color+'"></span>'+meta.label+'</span></div>'
+    + '<div class="cc-desc">'+cat.emo+' '+escapeHtml(cat.name)+' \u2014 '+escapeHtml(c.property)+', '+escapeHtml(c.unit)+'</div>'
+    + '<div class="cc-meta"><span>'+escapeHtml(t.name)+'</span><span>\u00B7 '+fmtShort(c.createdAt)+'</span></div>'
+    + '</div>';
+}
+function openVendorJob(id){ state.activeComplaintId = id; state.tenantView = 'vendor-detail'; render(); }
+function vendorJobDetail(){
+  const c = getComplaint(state.activeComplaintId);
+  const cat = catInfo(c.category);
+  const t = tenantInfo(c.tenantId);
+  let actionBlock = '';
+  if(c.status==='Assigned'){
+    actionBlock = '<button class="btn btn-primary btn-block" onclick="startJob(\''+c.id+'\')">'+icon('wrench')+'Accept & start job</button>';
+  }else if(c.status==='In Progress'){
+    actionBlock = vendorCompleteForm(c);
+  }else{
+    actionBlock = '<div class="card"><div class="section-title">Submitted report</div>'
+      + '<div style="font-size:13.5px;margin-top:6px;">'+escapeHtml(c.report||'\u2014')+'</div>'
+      + (c.materials? '<div class="help-text" style="margin-top:6px;">Materials: '+escapeHtml(c.materials)+'</div>':'')
+      + (c.rating? '<div class="stars" style="margin-top:10px;">'+[1,2,3,4,5].map(i=>iconStar(i<=c.rating)).join('')+'</div>':'<div class="help-text" style="margin-top:8px;">Waiting for tenant to verify.</div>')
+      + '</div>';
+  }
+  return backRow('jobs-back','Job details')
+    + '<div class="card" style="display:flex;flex-direction:column;gap:8px;">'
+    +   '<div style="display:flex;justify-content:space-between;gap:8px;"><span class="cc-id">'+c.id+'</span><span class="badge '+STATUS_META[c.status].cls+'"><span class="bdot" style="background:'+STATUS_META[c.status].color+'"></span>'+STATUS_META[c.status].label+'</span></div>'
+    +   '<div style="font-weight:600;font-size:14.5px;">'+cat.emo+' '+escapeHtml(cat.name)+'</div>'
+    +   '<div style="font-size:13.5px;color:var(--ink-600);">'+escapeHtml(c.description)+'</div>'
+    +   '<div style="height:1px;background:var(--line);margin:2px 0;"></div>'
+    +   '<div class="help-text">Property: '+escapeHtml(c.property)+', '+escapeHtml(c.unit)+'</div>'
+    +   '<div class="help-text">Tenant: '+escapeHtml(t.name)+' \u00B7 '+t.phone+'</div>'
+    + '</div>'
+    + (c.beforePhotos.length? '<div><div class="section-title" style="margin-bottom:8px;">Photos from tenant</div><div class="photo-row">'+c.beforePhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')+'</div></div>':'')
+    + actionBlock;
+}
+function startJob(id){
+  const c = getComplaint(id);
+  c.status = 'In Progress';
+  c.startedAt = new Date().toISOString();
+  toast('Job started');
+  render();
+}
+function vendorCompleteForm(c){
+  return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">'
+    + '<div class="section-title">Completion photos</div>'
+    + '<div class="photo-row">'
+    +   c.afterPhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')
+    +   '<label class="photo-add">'+icon('cam')+'<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addAfterPhoto(event,\''+c.id+'\')"></label>'
+    + '</div>'
+    + '<div class="field"><label>Materials used</label><input type="text" id="mat-'+c.id+'" placeholder="e.g. Tap washer, plumber\u2019s tape" value="'+escapeHtml(c.materials)+'"></div>'
+    + '<div class="field"><label>Completion notes</label><textarea id="rep-'+c.id+'" placeholder="What was done to fix the issue?">'+escapeHtml(c.report)+'</textarea></div>'
+    + '<div id="complete-error" class="field-error"></div>'
+    + '<button class="btn btn-primary btn-block" onclick="submitJobReport(\''+c.id+'\')">'+icon('check')+'Submit completion report</button>'
+    + '</div>';
+}
+async function addAfterPhoto(ev,id){
+  const file = ev.target.files[0];
+  if(!file) return;
+  try{
+    const url = await fileToDataUrl(file);
+    getComplaint(id).afterPhotos.push(url);
+    render();
+  }catch(e){ toast('Could not load that photo'); }
+}
+function submitJobReport(id){
+  const c = getComplaint(id);
+  const rep = document.getElementById('rep-'+id).value.trim();
+  const mat = document.getElementById('mat-'+id).value.trim();
+  const err = document.getElementById('complete-error');
+  if(!c.afterPhotos.length){ err.textContent = 'Add at least one completion photo.'; return; }
+  if(!rep){ err.textContent = 'Add a short note on what was done.'; return; }
+  c.report = rep; c.materials = mat;
+  c.status = 'Completed';
+  c.completedAt = new Date().toISOString();
+  toast('Report submitted \u00B7 tenant will be notified');
+  render();
+}
+
+/* ================= ADMIN APP ================= */
+const ADMIN_NAV = [
+  {id:'dashboard', label:'Dashboard', icon:'dash'},
+  {id:'complaints', label:'Complaints', icon:'list'},
+  {id:'vendors', label:'Vendors', icon:'wrench'},
+  {id:'properties', label:'Properties', icon:'bldg'},
+  {id:'tenants', label:'Tenants', icon:'users'}
+];
+const ADMIN_SOON = [
+  {label:'Finance', icon:'chart'},
+  {label:'Inventory', icon:'box'},
+  {label:'Documents', icon:'doc'},
+  {label:'Settings', icon:'gear'}
+];
+function renderAdminApp(){
+  let body = '';
+  if(state.adminView==='dashboard') body = adminDashboard();
+  else if(state.adminView==='complaints') body = adminComplaints();
+  else if(state.adminView==='vendors') body = adminVendors();
+  else if(state.adminView==='properties') body = adminProperties();
+  else if(state.adminView==='tenants') body = adminTenants();
+  else if(state.adminView==='complaint-detail') body = adminComplaintDetail();
+
+  return '<div class="admin-shell">'
+    + '<div class="sidebar" id="admin-sidebar">'
+    +   ADMIN_NAV.map(n=>'<button class="side-link '+(state.adminView===n.id?'active':'')+'" onclick="adminGo(\''+n.id+'\')">'+icon(n.icon)+'<span>'+n.label+'</span></button>').join('')
+    +   '<div class="side-note">More modules</div>'
+    +   ADMIN_SOON.map(n=>'<button class="side-link disabled" onclick="toast(\'Coming in a later phase\')">'+icon(n.icon)+'<span>'+n.label+'</span></button>').join('')
+    + '</div>'
+    + '<div class="admin-main">'
+    +   '<button class="hamburger" onclick="toggleSidebar()" style="color:var(--ink-900);margin-bottom:10px;">'+icon('menu')+'</button>'
+    +   body
+    + '</div>'
+    + '</div>';
+}
+function adminGo(view){ state.adminView = view; state.activeComplaintId=null; closeSidebar(); render(); }
+function toggleSidebar(){ document.getElementById('admin-sidebar').classList.toggle('open'); }
+function closeSidebar(){ const s = document.getElementById('admin-sidebar'); if(s) s.classList.remove('open'); }
+
+function adminDashboard(){
+  const all = state.complaints;
+  const open = all.filter(c=>c.status!=='Closed').length;
+  const now = new Date();
+  const completedThisMonth = all.filter(c=>c.closedAt && new Date(c.closedAt).getMonth()===now.getMonth() && new Date(c.closedAt).getFullYear()===now.getFullYear()).length;
+  const ratings = all.filter(c=>c.rating).map(c=>c.rating);
+  const avgRating = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1) : '\u2014';
+
+  const catCounts = {};
+  CATEGORIES.forEach(c=>catCounts[c.id]=0);
+  all.forEach(c=>{ catCounts[c.category] = (catCounts[c.category]||0)+1; });
+  const catEntries = Object.entries(catCounts).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+
+  const recent = all.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,6);
+
+  return ''
+  + '<div class="admin-head"><div><div class="admin-h1">Dashboard</div><div class="admin-sub">Live overview across all properties</div></div></div>'
+  + '<div class="kpi-row">'
+  +   kpi('Total properties', PROPERTIES.length, PROPERTIES.length+' active sites')
+  +   kpi('Total tenants', TENANTS.length, 'across all properties')
+  +   kpi('Open complaints', open, 'awaiting resolution')
+  +   kpi('Closed this month', completedThisMonth, 'avg rating '+avgRating+' / 5')
+  + '</div>'
+  + '<div class="chart-row">'
+  +   '<div class="chart-card"><h3>Complaints overview \u2014 last 6 weeks</h3><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>'
+  +   '<div class="chart-card"><h3>Complaints by category</h3><div class="chart-wrap"><canvas id="chart-cat"></canvas></div>'
+  +     '<div class="legend-row">'+catEntries.map(([id,v],i)=>'<span class="legend-item"><span class="legend-dot" style="background:'+catColor(i)+'"></span>'+catInfo(id).name+' ('+v+')</span>').join('')+'</div>'
+  +   '</div>'
+  + '</div>'
+  + '<div class="table-card">'
+  +   '<div class="table-card-head"><h3>Recent complaints</h3><button class="link-btn" onclick="adminGo(\'complaints\')">View all</button></div>'
+  +   '<div class="table-scroll"><table>'
+  +     '<tr><th>ID</th><th>Property</th><th>Tenant</th><th>Category</th><th>Status</th><th>Assigned to</th><th>Date</th></tr>'
+  +     recent.map(adminRow).join('')
+  +   '</table></div>'
+  + '</div>';
+}
+function kpi(label,num,sub){
+  return '<div class="kpi"><div class="kpi-label">'+label+'</div><div class="kpi-num">'+num+'</div><div class="kpi-sub">'+sub+'</div></div>';
+}
+function catColor(i){
+  const palette = ['#2F6BA6','#B37A1C','#347A5C','#6E5A9E','#B14B41','#177A82','#B8902E','#4B5468','#7A8296','#2E4372','#98741F'];
+  return palette[i % palette.length];
+}
+function adminRow(c){
+  const meta = STATUS_META[c.status];
+  return '<tr class="row-click" onclick="adminOpenComplaint(\''+c.id+'\')">'
+    + '<td>'+c.id+'</td><td>'+escapeHtml(c.property)+'</td><td>'+escapeHtml(tenantInfo(c.tenantId).name)+'</td>'
+    + '<td>'+catInfo(c.category).emo+' '+catInfo(c.category).name+'</td>'
+    + '<td><span class="badge '+meta.cls+'"><span class="bdot" style="background:'+meta.color+'"></span>'+meta.label+'</span></td>'
+    + '<td>'+(c.vendorId? escapeHtml(vendorInfo(c.vendorId).name) : '\u2014')+'</td>'
+    + '<td>'+fmtShort(c.createdAt)+'</td></tr>';
+}
+function adminOpenComplaint(id){ state.activeComplaintId = id; state.adminView = 'complaint-detail'; render(); }
+
+function adminComplaints(){
+  const f = state.adminFilter;
+  let list = state.complaints.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  if(f.status!=='all') list = list.filter(c=>c.status===f.status);
+  if(f.category!=='all') list = list.filter(c=>c.category===f.category);
+  return ''
+  + '<div class="admin-head"><div><div class="admin-h1">Complaints</div><div class="admin-sub">'+list.length+' of '+state.complaints.length+' requests</div></div>'
+  +   '<div class="filter-bar">'
+  +     '<select onchange="setAdminFilter(\'status\',this.value)">'
+  +       '<option value="all">All statuses</option>'
+  +       Object.keys(STATUS_META).map(s=>'<option value="'+s+'" '+(f.status===s?'selected':'')+'>'+STATUS_META[s].label+'</option>').join('')
+  +     '</select>'
+  +     '<select onchange="setAdminFilter(\'category\',this.value)">'
+  +       '<option value="all">All categories</option>'
+  +       CATEGORIES.map(c=>'<option value="'+c.id+'" '+(f.category===c.id?'selected':'')+'>'+c.name+'</option>').join('')
+  +     '</select>'
+  +   '</div>'
+  + '</div>'
+  + '<div class="table-card"><div class="table-scroll"><table>'
+  +   '<tr><th>ID</th><th>Property</th><th>Tenant</th><th>Category</th><th>Status</th><th>Assigned to</th><th>Date</th></tr>'
+  +   (list.length? list.map(adminRow).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:30px;">No complaints match these filters</td></tr>')
+  + '</table></div></div>';
+}
+function setAdminFilter(key,val){ state.adminFilter[key]=val; render(); }
+
+function adminComplaintDetail(){
+  const c = getComplaint(state.activeComplaintId);
+  if(!c) return emptyState('inbox','Not found','Pick a complaint from the list.');
+  const cat = catInfo(c.category);
+  const t = tenantInfo(c.tenantId);
+  const vendor = c.vendorId ? vendorInfo(c.vendorId) : null;
+  return '<div class="back-row" style="margin-bottom:14px;"><button class="back-btn" onclick="adminGo(\'complaints\')">'+icon('back')+'</button><div class="detail-title">'+c.id+'</div>'
+    + '<span class="badge '+STATUS_META[c.status].cls+'" style="margin-left:6px;"><span class="bdot" style="background:'+STATUS_META[c.status].color+'"></span>'+STATUS_META[c.status].label+'</span></div>'
+    + '<div class="chart-row" style="grid-template-columns:1.3fr 1fr;align-items:start;">'
+    +   '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'
+    +     '<div style="font-weight:600;font-size:15px;">'+cat.emo+' '+cat.name+'</div>'
+    +     '<div style="font-size:13.5px;color:var(--ink-600);">'+escapeHtml(c.description)+'</div>'
+    +     (c.beforePhotos.length? '<div class="photo-row">'+c.beforePhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')+'</div>':'')
+    +     (c.report? '<div style="height:1px;background:var(--line);"></div><div class="section-title">Vendor report</div><div style="font-size:13px;">'+escapeHtml(c.report)+'</div>'+(c.materials?'<div class="help-text">Materials: '+escapeHtml(c.materials)+'</div>':''):'')
+    +     (c.afterPhotos.length? '<div class="photo-row">'+c.afterPhotos.map(p=>'<img class="photo-thumb" src="'+p+'">').join('')+'</div>':'')
+    +     (c.rating? '<div><div class="section-title">Tenant rating</div><div class="stars">'+[1,2,3,4,5].map(i=>iconStar(i<=c.rating)).join('')+'</div>'+(c.feedback?'<div class="help-text">\u201C'+escapeHtml(c.feedback)+'\u201D</div>':'')+'</div>':'')
+    +   '</div>'
+    +   '<div class="card" style="display:flex;flex-direction:column;gap:8px;">'
+    +     '<div class="section-title">Property</div><div style="font-size:13.5px;">'+escapeHtml(c.property)+', '+escapeHtml(c.unit)+'</div>'
+    +     '<div class="section-title" style="margin-top:6px;">Tenant</div><div style="font-size:13.5px;">'+escapeHtml(t.name)+'</div><div class="help-text">'+t.phone+'</div>'
+    +     (vendor? '<div class="section-title" style="margin-top:6px;">Vendor</div><div style="font-size:13.5px;">'+escapeHtml(vendor.name)+'</div><div class="help-text">'+vendor.phone+'</div>' : '<div class="help-text" style="margin-top:6px;">No vendor assigned yet</div>')
+    +     '<div class="section-title" style="margin-top:6px;">Raised</div><div class="help-text">'+fmt(c.createdAt)+'</div>'
+    +   '</div>'
+    + '</div>';
+}
+
+function adminVendors(){
+  return '<div class="admin-head"><div><div class="admin-h1">Vendors</div><div class="admin-sub">'+VENDORS.length+' registered vendors</div></div></div>'
+    + '<div class="vendor-grid">'
+    +   VENDORS.map(v=>{
+          const active = state.complaints.filter(c=>c.vendorId===v.id && c.status!=='Closed').length;
+          return '<div class="vendor-card">'
+            + '<div class="vendor-name">'+escapeHtml(v.name)+'</div>'
+            + '<div class="vendor-cats">'+v.categories.map(cid=>'<span class="chip">'+catInfo(cid).name+'</span>').join('')+'</div>'
+            + '<div class="vendor-rating">'+icon('star')+v.rating+' \u00B7 '+v.jobsDone+' jobs done</div>'
+            + '<div class="help-text">'+v.phone+'</div>'
+            + '<div class="help-text">'+active+' active job'+(active===1?'':'s')+' right now</div>'
+            + '</div>';
+        }).join('')
+    + '</div>';
+}
+function adminProperties(){
+  return '<div class="admin-head"><div><div class="admin-h1">Properties</div><div class="admin-sub">'+PROPERTIES.length+' managed properties</div></div></div>'
+    + '<div class="vendor-grid">'
+    +   PROPERTIES.map(p=>{
+          const openCount = state.complaints.filter(c=>c.property===p.name && c.status!=='Closed').length;
+          const tenantCount = TENANTS.filter(t=>t.property===p.name).length;
+          return '<div class="vendor-card">'
+            + '<div class="vendor-name">'+icon('bldg')+' '+escapeHtml(p.name)+'</div>'
+            + '<div class="chip" style="width:fit-content;">'+p.type+'</div>'
+            + '<div class="help-text">'+escapeHtml(p.address)+'</div>'
+            + '<div class="help-text">Manager: '+escapeHtml(p.manager)+'</div>'
+            + '<div class="help-text">'+tenantCount+' tenants \u00B7 '+openCount+' open complaint'+(openCount===1?'':'s')+'</div>'
+            + '</div>';
+        }).join('')
+    + '</div>';
+}
+function adminTenants(){
+  return '<div class="admin-head"><div><div class="admin-h1">Tenants</div><div class="admin-sub">'+TENANTS.length+' registered tenants</div></div></div>'
+    + '<div class="table-card"><div class="table-scroll"><table>'
+    +   '<tr><th>Name</th><th>Property</th><th>Unit</th><th>Phone</th><th>Open</th><th>Closed</th></tr>'
+    +   TENANTS.map(t=>{
+          const mine = state.complaints.filter(c=>c.tenantId===t.id);
+          const open = mine.filter(c=>c.status!=='Closed').length;
+          const closed = mine.filter(c=>c.status==='Closed').length;
+          return '<tr><td>'+escapeHtml(t.name)+'</td><td>'+escapeHtml(t.property)+'</td><td>'+escapeHtml(t.unit)+'</td><td>'+t.phone+'</td><td>'+open+'</td><td>'+closed+'</td></tr>';
+        }).join('')
+    + '</table></div></div>';
+}
+
+/* ============ CHARTS ============ */
+function buildCharts(){
+  if(typeof Chart === 'undefined') return;
+  const trendCanvas = document.getElementById('chart-trend');
+  if(trendCanvas){
+    const weeks = [];
+    const openSeries = [];
+    const closedSeries = [];
+    for(let w=5; w>=0; w--){
+      const start = new Date(); start.setDate(start.getDate() - (w*7+6));
+      const end = new Date(); end.setDate(end.getDate() - (w*7));
+      weeks.push(w===0?'This week':fmtShort(start.toISOString()));
+      const inRange = state.complaints.filter(c=>{
+        const d = new Date(c.createdAt);
+        return d>=start && d<=end;
+      });
+      openSeries.push(inRange.filter(c=>c.status!=='Closed').length);
+      closedSeries.push(inRange.filter(c=>c.status==='Closed').length);
+    }
+    chartRefs.trend = new Chart(trendCanvas, {
+      type:'line',
+      data:{ labels:weeks, datasets:[
+        {label:'Raised', data:openSeries.map((v,i)=>v+closedSeries[i]), borderColor:'#B37A1C', backgroundColor:'rgba(179,122,28,0.08)', tension:0.35, fill:true, pointRadius:3},
+        {label:'Closed', data:closedSeries, borderColor:'#347A5C', backgroundColor:'rgba(52,122,92,0.08)', tension:0.35, fill:true, pointRadius:3}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom', labels:{boxWidth:8, usePointStyle:true, font:{size:11}}}},
+        scales:{ y:{ beginAtZero:true, ticks:{precision:0, font:{size:11}}, grid:{color:'rgba(130,142,163,0.15)'} }, x:{ ticks:{font:{size:11}}, grid:{display:false} } }
+      }
+    });
+  }
+  const catCanvas = document.getElementById('chart-cat');
+  if(catCanvas){
+    const catCounts = {};
+    CATEGORIES.forEach(c=>catCounts[c.id]=0);
+    state.complaints.forEach(c=>{ catCounts[c.category] = (catCounts[c.category]||0)+1; });
+    const entries = Object.entries(catCounts).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    chartRefs.cat = new Chart(catCanvas, {
+      type:'doughnut',
+      data:{ labels: entries.map(([id])=>catInfo(id).name), datasets:[{ data: entries.map(([,v])=>v), backgroundColor: entries.map((_,i)=>catColor(i)), borderWidth:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} }
+    });
+  }
+}
+
+/* ============ AFTER RENDER ============ */
+function afterRender(){
+  if(state.role==='admin' && state.adminView==='dashboard'){
+    buildCharts();
+  }
+}
+
+/* ============ INIT ============ */
+loadState();
+render();
+window.addEventListener('resize', ()=>{ if(state.role==='admin') closeSidebar(); });
+</script>
+</body>
+</html>

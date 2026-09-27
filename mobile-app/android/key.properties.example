@@ -1,0 +1,6 @@
+# Keystore signing configuration for generating signed release APK
+# Generate a keystore with create-keystore.bat or keytool, then rename this file to key.properties
+storePassword=mngroups2026
+keyPassword=mngroups2026
+keyAlias=mngroups
+storeFile=../mngroups-release-key.jks
